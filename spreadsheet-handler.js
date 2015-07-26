@@ -5,7 +5,7 @@ var fs = require('fs'),
     googleConfig = JSON.parse(fs.readFileSync('config/google-config.json', 'utf-8'));
 
 // Create duplicate spreadsheet
-module.exports.createDuplicateSpreadsheet = function(copyTitle) {
+module.exports.createDuplicateSpreadsheet = function(copyTitle, callback) {
     authTokenCache(function(err, token) {
         console.log(err || token);
         if (token) {
@@ -16,19 +16,16 @@ module.exports.createDuplicateSpreadsheet = function(copyTitle) {
             var params = {
                 title: copyTitle
             };
-            googleDrive(token).files(googleConfig["spreadsheet_id"]).copy(meta, params,
+            googleDrive(token).files(googleConfig["job_template_spreadsheet_id"]).copy(meta, params,
                 function(err, response, body) {
-                    if (!err) {
-                        var result = JSON.parse(body);
-                        console.log('Spreadsheet file copied successfully. ID- ' + result.id);
-                    } else console.log('Spreadsheet could not be copied. \n Error- ' + err);
+                    callback(err, body);
                 });
         };
     });
 };
 
-//Update cell at row r, column c to text
-module.exports.updateCell = function(text, r, c) {
+//Update cell at row writeRow, column writeColumn to updatedValue
+module.exports.updateCell = function(fileID, updatedValue, writeRow, writeColumn, callback) {
     authTokenCache(function(err, token) {
         console.log(err || token);
         if (token) {
@@ -36,7 +33,7 @@ module.exports.updateCell = function(text, r, c) {
             // load spreadsheet
             Spreadsheet.load({
                 debug: true,
-                spreadsheetId: googleConfig["spreadsheet_id"],
+                spreadsheetId: fileID,
                 worksheetName: 'Sheet1',
                 accessToken: {
                     type: 'Bearer',
@@ -44,28 +41,46 @@ module.exports.updateCell = function(text, r, c) {
                 }
             }, function sheetReady(err, spreadsheet) {
                 if (!err) {
-                    // Update cell at row r, column c to text
+                    // Update cell
                     var column = {};
-                    column[c] = text;
+                    column[writeColumn] = updatedValue;
                     var row = {};
-                    row[r] = column;
+                    row[writeRow] = column;
                     spreadsheet.add(row);
                     spreadsheet.send(function(err) {
-                        if (!err) {
-                            console.log('Updated cell at row ' + r + ', column ' + c + ' to ' + text);
-                        } else console.log('Could not update cell. \n Error- ' + err);
-                    });
-
-                    // Read rows
-                    spreadsheet.receive(function(err, rows, info) {
-                        if (!err) {
-                            console.log("Cell at row 2 and column 1- ", rows[2][1]);
-                            console.log("Spreadsheet info:", info);
-                        } else console.log('Could not read rows. \n Error- ' + err);
+                        callback(err);
                     });
                 } else {
-                    console.log('Could not load spreadsheet');
-                    console.log('\n Error- ' + err);
+                    callback(err);
+                }
+            });
+        };
+    });
+};
+
+// Return value of given cell
+module.exports.readCell = function(fileID, readRow, readColumn, callback) {
+    authTokenCache(function(err, token) {
+        console.log(err || token);
+        if (token) {
+            var Spreadsheet = require('edit-google-spreadsheet');
+            // load spreadsheet
+            Spreadsheet.load({
+                debug: true,
+                spreadsheetId: fileID,
+                worksheetName: 'Sheet1',
+                accessToken: {
+                    type: 'Bearer',
+                    token: token
+                }
+            }, function sheetReady(err, spreadsheet) {
+                if (!err) {
+                    // Read rows
+                    spreadsheet.receive(function(err, rows, info) {
+                        callback(err, rows[readRow][readColumn]);
+                    });
+                } else {
+                    callback(err, '');
                 }
             });
         };
