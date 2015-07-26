@@ -4,6 +4,29 @@
 var fs = require('fs'),
     googleConfig = JSON.parse(fs.readFileSync('config/google-config.json', 'utf-8'));
 
+// Create duplicate spreadsheet
+module.exports.createDuplicateSpreadsheet = function(copyTitle) {
+    authTokenCache(function(err, token) {
+        console.log(err || token);
+        if (token) {
+            var googleDrive = require('google-drive');
+            var meta = {
+                title: copyTitle
+            };
+            var params = {
+                title: copyTitle
+            };
+            googleDrive(token).files(googleConfig["spreadsheet_id"]).copy(meta, params,
+                function(err, response, body) {
+                    if (!err) {
+                        var result = JSON.parse(body);
+                        console.log('Spreadsheet file copied successfully. ID- ' + result.id);
+                    } else console.log('Spreadsheet could not be copied. \n Error- ' + err);
+                });
+        };
+    });
+};
+
 //Update cell at row r, column c to text
 module.exports.updateCell = function(text, r, c) {
     authTokenCache(function(err, token) {
@@ -26,11 +49,10 @@ module.exports.updateCell = function(text, r, c) {
                     column[c] = text;
                     var row = {};
                     row[r] = column;
-            		spreadsheet.add(row);
+                    spreadsheet.add(row);
                     spreadsheet.send(function(err) {
                         if (!err) {
-                            console.log('Updated cell at row ' + r 
-                            	+ ', column ' + c + ' to ' + text);
+                            console.log('Updated cell at row ' + r + ', column ' + c + ' to ' + text);
                         } else console.log('Could not update cell. \n Error- ' + err);
                     });
 
@@ -52,7 +74,7 @@ module.exports.updateCell = function(text, r, c) {
 
 // get auth_token
 function authTokenCache(callback) {
-    
+
     var TokenCache = require('google-oauth-jwt').TokenCache,
         tokens = new TokenCache();
 

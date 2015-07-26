@@ -14,6 +14,7 @@
     "request": "^2.57.0",
     "google-oauth-jwt": "^0.1.6",
     "google-spreadsheet": "^1.0.1",
-    "edit-google-spreadsheet": "^0.2.19"
+    "edit-google-spreadsheet": "^0.2.19",
+    "google-drive": "^0.0.6"
   }
 }
