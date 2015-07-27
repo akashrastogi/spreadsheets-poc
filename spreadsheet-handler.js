@@ -7,7 +7,7 @@ var fs = require('fs'),
 // Create duplicate spreadsheet
 module.exports.createDuplicateSpreadsheet = function(copyTitle, callback) {
     authTokenCache(function(err, token) {
-        console.log(err || token);
+        console.log(err || '');
         if (token) {
             var googleDrive = require('google-drive');
             var meta = {
@@ -18,6 +18,7 @@ module.exports.createDuplicateSpreadsheet = function(copyTitle, callback) {
             };
             googleDrive(token).files(googleConfig["job_template_spreadsheet_id"]).copy(meta, params,
                 function(err, response, body) {
+                    console.log(err || 'Spreadsheet created successfully.');
                     callback(err, body);
                 });
         };
@@ -27,7 +28,7 @@ module.exports.createDuplicateSpreadsheet = function(copyTitle, callback) {
 //Update cell at row writeRow, column writeColumn to updatedValue
 module.exports.updateCell = function(fileID, updatedValue, writeRow, writeColumn, callback) {
     authTokenCache(function(err, token) {
-        console.log(err || token);
+        console.log(err || '');
         if (token) {
             var Spreadsheet = require('edit-google-spreadsheet');
             // load spreadsheet
@@ -48,9 +49,11 @@ module.exports.updateCell = function(fileID, updatedValue, writeRow, writeColumn
                     row[writeRow] = column;
                     spreadsheet.add(row);
                     spreadsheet.send(function(err) {
+                        console.log(err || 'Cell updated successfully.');
                         callback(err);
                     });
                 } else {
+                    console.log('could not load spreadsheet. Err- ' + err);
                     callback(err);
                 }
             });
@@ -61,7 +64,7 @@ module.exports.updateCell = function(fileID, updatedValue, writeRow, writeColumn
 // Return value of given cell
 module.exports.readCell = function(fileID, readRow, readColumn, callback) {
     authTokenCache(function(err, token) {
-        console.log(err || token);
+        console.log(err || '');
         if (token) {
             var Spreadsheet = require('edit-google-spreadsheet');
             // load spreadsheet
@@ -77,9 +80,11 @@ module.exports.readCell = function(fileID, readRow, readColumn, callback) {
                 if (!err) {
                     // Read rows
                     spreadsheet.receive(function(err, rows, info) {
+                        console.log(err || 'Read cell value successfully. Value- ' + rows[readRow][readColumn]);
                         callback(err, rows[readRow][readColumn]);
                     });
                 } else {
+                    console.log('could not load spreadsheet. Err- ' + err);
                     callback(err, '');
                 }
             });
@@ -102,6 +107,7 @@ function authTokenCache(callback) {
             'https://spreadsheets.google.com/feeds/'
         ]
     }, function(err, token) {
+        console.log(err || ('Auth token- ' + token));
         callback(err, token)
     });
 }

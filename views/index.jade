@@ -2,4 +2,20 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+
+  table(border=1)
+      tr
+        td
+          input#txt_spreadsheet_name(type='text' placeholder='Spreadsheet name')
+        td
+          input#btn_create_spreadsheet(type='button', value='Create spreadsheet')
+      tr
+        td
+          textarea#txt_input_cell(rows='8' cols='40' placeholder='cell value to update')
+        td
+          input#btn_update_cell(type='button', value='Update value & display output')
+      tr
+        td(colspan='2' align='center')
+          textarea#txt_output_cell(rows='8', cols='60' placeholder='Output value' readonly='')
+append js
+  script(src="/javascripts/spreadsheet.js")
